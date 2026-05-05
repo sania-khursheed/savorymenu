@@ -63,57 +63,90 @@ async function startServer() {
   app.use(express.json());
 
   // API Routes
-  app.get("/api/menu", async (req, res) => {
-    const db = await getDB();
-    res.json(db.menu);
+  const router = express.Router();
+
+  router.get("/menu", async (req, res) => {
+    try {
+      const db = await getDB();
+      res.json(db.menu);
+    } catch (err) {
+      res.status(500).json({ error: "Failed to fetch menu" });
+    }
   });
 
-  app.post("/api/menu", async (req, res) => {
-    const db = await getDB();
-    const newItem = { ...req.body, id: Date.now().toString() };
-    db.menu.push(newItem);
-    await saveDB(db);
-    res.status(201).json(newItem);
+  router.post("/menu", async (req, res) => {
+    try {
+      const db = await getDB();
+      const newItem = { ...req.body, id: Date.now().toString() };
+      db.menu.push(newItem);
+      await saveDB(db);
+      res.status(201).json(newItem);
+    } catch (err) {
+      res.status(500).json({ error: "Failed to add menu item" });
+    }
   });
 
-  app.put("/api/menu/:id", async (req, res) => {
-    const db = await getDB();
-    const index = db.menu.findIndex((m: any) => m.id === req.params.id);
-    if (index === -1) return res.status(404).send("Not found");
-    db.menu[index] = { ...db.menu[index], ...req.body };
-    await saveDB(db);
-    res.json(db.menu[index]);
+  router.put("/menu/:id", async (req, res) => {
+    try {
+      const db = await getDB();
+      const index = db.menu.findIndex((m: any) => m.id === req.params.id);
+      if (index === -1) return res.status(404).json({ error: "Not found" });
+      db.menu[index] = { ...db.menu[index], ...req.body };
+      await saveDB(db);
+      res.json(db.menu[index]);
+    } catch (err) {
+      res.status(500).json({ error: "Failed to update menu item" });
+    }
   });
 
-  app.delete("/api/menu/:id", async (req, res) => {
-    const db = await getDB();
-    db.menu = db.menu.filter((m: any) => m.id !== req.params.id);
-    await saveDB(db);
-    res.status(204).send();
+  router.delete("/menu/:id", async (req, res) => {
+    try {
+      const db = await getDB();
+      db.menu = db.menu.filter((m: any) => m.id !== req.params.id);
+      await saveDB(db);
+      res.status(204).send();
+    } catch (err) {
+      res.status(500).json({ error: "Failed to delete menu item" });
+    }
   });
 
   // Simple Auth Routes
-  app.post("/api/auth/signup", async (req, res) => {
-    const { email, password, name } = req.body;
-    const db = await getDB();
-    if (db.users.find((u: any) => u.email === email)) {
-      return res.status(400).json({ message: "User already exists" });
+  router.post("/auth/signup", async (req, res) => {
+    try {
+      const { email, password, name } = req.body;
+      const db = await getDB();
+      if (db.users.find((u: any) => u.email === email)) {
+        return res.status(400).json({ message: "User already exists" });
+      }
+      const newUser = { id: Date.now().toString(), email, password, name };
+      db.users.push(newUser);
+      await saveDB(db);
+      res.status(201).json({ id: newUser.id, email: newUser.email, name: newUser.name });
+    } catch (err) {
+      res.status(500).json({ error: "Signup failed" });
     }
-    const newUser = { id: Date.now().toString(), email, password, name };
-    db.users.push(newUser);
-    await saveDB(db);
-    res.status(201).json({ id: newUser.id, email: newUser.email, name: newUser.name });
   });
 
-  app.post("/api/auth/login", async (req, res) => {
-    const { email, password } = req.body;
-    const db = await getDB();
-    const user = db.users.find((u: any) => u.email === email && u.password === password);
-    if (!user) {
-      return res.status(401).json({ message: "Invalid credentials" });
+  router.post("/auth/login", async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      const db = await getDB();
+      const user = db.users.find((u: any) => u.email === email && u.password === password);
+      if (!user) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+      res.json({ id: user.id, email: user.email, name: user.name });
+    } catch (err) {
+      res.status(500).json({ error: "Login failed" });
     }
-    res.json({ id: user.id, email: user.email, name: user.name });
   });
+
+  // Catch-all for API to prevent returning HTML
+  router.all("*", (req, res) => {
+    res.status(404).json({ error: `API route ${req.path} not found` });
+  });
+
+  app.use("/api", router);
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
