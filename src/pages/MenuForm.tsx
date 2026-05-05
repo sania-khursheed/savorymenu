@@ -20,52 +20,45 @@ export default function MenuForm() {
 
   useEffect(() => {
     if (isEdit) {
-      const fetchItem = async () => {
-        try {
-          const res = await fetch("/api/menu");
-          const items: MenuItem[] = await res.json();
-          const item = items.find(i => i.id === id);
-          if (item) {
-            setFormData({
-              name: item.name,
-              price: item.price,
-              category: item.category,
-              image: item.image,
-              description: item.description
-            });
-          }
-        } catch (err) {
-          console.error(err);
-        } finally {
-          setIsFetching(false);
+      const savedItems = localStorage.getItem("menuItems");
+      if (savedItems) {
+        const items: MenuItem[] = JSON.parse(savedItems);
+        const item = items.find(i => i.id === id);
+        if (item) {
+          setFormData({
+            name: item.name,
+            price: item.price,
+            category: item.category,
+            image: item.image,
+            description: item.description
+          });
         }
-      };
-      fetchItem();
+      }
+      setIsFetching(false);
     }
   }, [id, isEdit]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    try {
-      const url = isEdit ? `/api/menu/${id}` : "/api/menu";
-      const method = isEdit ? "PUT" : "POST";
+    setTimeout(() => {
+      const savedItems = localStorage.getItem("menuItems");
+      let items: MenuItem[] = savedItems ? JSON.parse(savedItems) : [];
 
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData)
-      });
-
-      if (res.ok) {
-        navigate("/dashboard");
+      if (isEdit) {
+        items = items.map(item => 
+          item.id === id ? { ...formData, id } : item
+        );
+      } else {
+        const newItem = { ...formData, id: Date.now().toString() };
+        items.push(newItem);
       }
-    } catch (err) {
-      console.error(err);
-    } finally {
+
+      localStorage.setItem("menuItems", JSON.stringify(items));
       setIsLoading(false);
-    }
+      navigate("/dashboard");
+    }, 500);
   };
 
   if (isFetching) {

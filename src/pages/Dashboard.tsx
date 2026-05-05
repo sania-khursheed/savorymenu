@@ -12,17 +12,35 @@ export default function Dashboard() {
 
   const categories = ["All", ...Array.from(new Set(items.map(i => i.category)))];
 
-  const fetchMenu = async () => {
+  const fetchMenu = () => {
     setIsLoading(true);
-    try {
-      const res = await fetch("/api/menu");
-      const data = await res.json();
-      setItems(data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsLoading(false);
+    const savedItems = localStorage.getItem("menuItems");
+    if (savedItems) {
+      setItems(JSON.parse(savedItems));
+    } else {
+      // Seed initial data
+      const initialData: MenuItem[] = [
+        {
+          id: "1",
+          name: "Signature Burger",
+          price: 15.99,
+          category: "Entree",
+          image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=600",
+          description: "Juicy beef patty with secret sauce, cheddar cheese, and fresh greens."
+        },
+        {
+          id: "2",
+          name: "Truffle Fries",
+          price: 8.50,
+          category: "Sides",
+          image: "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?q=80&w=600",
+          description: "Golden fries drizzled with truffle oil and sprinkled with parmesan."
+        }
+      ];
+      setItems(initialData);
+      localStorage.setItem("menuItems", JSON.stringify(initialData));
     }
+    setIsLoading(false);
   };
 
   useEffect(() => {
@@ -31,16 +49,11 @@ export default function Dashboard() {
 
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const handleDelete = async (id: string) => {
-    try {
-      const res = await fetch(`/api/menu/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to delete");
-      setItems(prev => prev.filter(item => item.id !== id));
-      setDeletingId(null);
-    } catch (err) {
-      console.error(err);
-      alert("Error deleting item");
-    }
+  const handleDelete = (id: string) => {
+    const updatedItems = items.filter(item => item.id !== id);
+    setItems(updatedItems);
+    localStorage.setItem("menuItems", JSON.stringify(updatedItems));
+    setDeletingId(null);
   };
 
   const filteredItems = items.filter(item => {

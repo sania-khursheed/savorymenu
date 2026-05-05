@@ -11,31 +11,20 @@ export default function Signup() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const handleSignup = async (e: React.FormEvent) => {
+  const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError("");
-
-    try {
-      const res = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message || "Failed to create account");
+    
+    setTimeout(() => {
+      if (name && email && password) {
+        localStorage.setItem("isLoggedIn", "true");
+        localStorage.setItem("user", JSON.stringify({ name, email }));
+        navigate("/dashboard");
+      } else {
+        setError("Please fill in all fields");
       }
-
-      const user = await res.json();
-      localStorage.setItem("user", JSON.stringify(user));
-      navigate("/dashboard");
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
       setIsLoading(false);
-    }
+    }, 800);
   };
 
   return (

@@ -10,31 +10,21 @@ export default function Login() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError("");
-
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message || "Invalid credentials");
+    
+    // Fake authentication - accept any non-empty credentials
+    setTimeout(() => {
+      if (email && password) {
+        localStorage.setItem("isLoggedIn", "true");
+        localStorage.setItem("user", JSON.stringify({ name: email.split('@')[0], email }));
+        navigate("/dashboard");
+      } else {
+        setError("Please enter email and password");
       }
-
-      const user = await res.json();
-      localStorage.setItem("user", JSON.stringify(user));
-      navigate("/dashboard");
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
       setIsLoading(false);
-    }
+    }, 800);
   };
 
   return (

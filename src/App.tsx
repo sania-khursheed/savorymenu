@@ -10,8 +10,8 @@ import Dashboard from "./pages/Dashboard";
 import MenuForm from "./pages/MenuForm";
 
 const ProtectedRoute = () => {
-  const user = localStorage.getItem("user");
-  if (!user) return <Navigate to="/login" replace />;
+  const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+  if (!isLoggedIn) return <Navigate to="/login" replace />;
   return <Outlet />;
 };
 

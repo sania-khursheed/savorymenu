@@ -8,6 +8,7 @@ export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
   const userStr = localStorage.getItem("user");
   const user = userStr ? JSON.parse(userStr) : null;
 
@@ -18,6 +19,7 @@ export default function Navbar() {
   }, []);
 
   const handleLogout = () => {
+    localStorage.removeItem("isLoggedIn");
     localStorage.removeItem("user");
     navigate("/login");
   };
@@ -40,7 +42,7 @@ export default function Navbar() {
           <div className="bg-brand-500 p-2 rounded-xl group-hover:rotate-12 transition-transform">
             <Utensils className="w-6 h-6 text-white" />
           </div>
-          <span className="font-display text-2xl font-bold tracking-tight">SavoryMenu</span>
+          <span className="font-display text-2xl font-bold tracking-tight text-stone-900">SavoryMenu</span>
         </Link>
 
         {/* Desktop Links */}
@@ -57,7 +59,7 @@ export default function Navbar() {
           
           <div className="h-6 w-px bg-stone-200" />
 
-          {user ? (
+          {isLoggedIn ? (
             <div className="flex items-center gap-4">
               <Link
                 to="/dashboard"
@@ -114,7 +116,7 @@ export default function Navbar() {
                 </Link>
               ))}
               <div className="h-px bg-stone-100" />
-              {user ? (
+              {isLoggedIn ? (
                 <>
                   <Link
                     to="/dashboard"
